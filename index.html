@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <!-- スマホ画面に最適化（レスポンシブ対応） -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>スマホToDoアプリ</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        header {
+            background: #4a90e2;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .input-area {
+            display: flex;
+            padding: 15px;
+            gap: 10px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: #4a90e2;
+        }
+
+        button.add-btn {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 0 18px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button.add-btn:active {
+            background: #357abd;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            word-break: break-all;
+        }
+
+        .task-item.completed span {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .task-text {
+            flex: 1;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .delete-btn {
+            background: #ff5c5c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .delete-btn:active {
+            background: #d93d3d;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #aaa;
+            margin-top: 40px;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>マイタスク管理</header>
+    
+    <div class="input-area">
+        <input type="text" id="taskInput" placeholder="新しいタスクを入力...">
+        <button class="add-btn" onclick="addTask()">追加</button>
+    </div>
+
+    <ul class="task-list" id="taskList"></ul>
+</div>
+
+<script>
+    // 起動時に既存タスクを読み込み
+    document.addEventListener('DOMContentLoaded', loadTasks);
+
+    function addTask() {
+        const input = document.getElementById('taskInput');
+        const text = input.value.trim();
+        if (text === '') return;
+
+        const tasks = getStoredTasks();
+        tasks.push({ text: text, completed: false });
+        saveTasks(tasks);
+
+        input.value = '';
+        renderTasks();
+    }
+
+    function toggleTask(index) {
+        const tasks = getStoredTasks();
+        tasks[index].completed = !tasks[index].completed;
+        saveTasks(tasks);
+        renderTasks();
+    }
+
+    function deleteTask(index) {
+        const tasks = getStoredTasks();
+        tasks.splice(index, 1);
+        saveTasks(tasks);
+        renderTasks();
+    }
+
+    function getStoredTasks() {
+        return JSON.parse(localStorage.getItem('my_tasks')) || [];
+    }
+
+    function saveTasks(tasks) {
+        localStorage.setItem('my_tasks', JSON.stringify(tasks));
+    }
+
+    function renderTasks() {
+        const list = document.getElementById('taskList');
+        const tasks = getStoredTasks();
+        list.innerHTML = '';
+
+        if (tasks.length === 0) {
+            list.innerHTML = '<p class="empty-msg">タスクはありません</p>';
+            return;
+        }
+
+        tasks.forEach((task, index) => {
+            const li = document.createElement('li');
+            li.className = `task-item ${task.completed ? 'completed' : ''}`;
+            
+            li.innerHTML = `
+                <span class="task-text" onclick="toggleTask(${index})">${escapeHtml(task.text)}</span>
+                <button class="delete-btn" onclick="deleteTask(${index})">削除</button>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>"']/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+        });
+    }
+</script>
+
+</body>
+</html>
